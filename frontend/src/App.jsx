@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Routes} from "react-router"
+import { Navigate, Route, Routes} from "react-router"
 
 import HomePage from './pages/HomePage.jsx'
 import LoginPage from './pages/LoginPage'
@@ -16,25 +16,28 @@ import { axiosInstance } from './lib/axios.js'
 const App = () => {
   // axios instance
   // react query tanstack query
-  const {data, isLoading, error} = useQuery({
-    queryKey: ['todos'], 
+  const {data:authData, isLoading, error} = useQuery({
+    queryKey: ['authUser'], 
     queryFn: async () => {
-      const res = await axiosInstance.get("/auth/me"); 
+      const res = await axiosInstance.get("http://localhost:5173/api/"); 
       return res.data; 
     },
+    retry : false, // Disable retry on failure
   });
   
-  console.log(data, isLoading, error);
-  return <div className=' h-screen text-5xl ' data-theme = "night">
+  // console.log(data, isLoading, error);
+  const authUser = authData?.user;
+
+  return <div className=' h-screen text ' data-theme = "night">
     <button onClick={() => toast.error("Hello world")}>Onclick </button>
     <Routes>
-      <Route path='/' element = {<HomePage/>} />
-      <Route path='/login' element = {<LoginPage/>} />
-      <Route path='/signup' element = {<SignUpPage/>} />
-      <Route path='/notifications' element = {<NotificationPage/>} />
-      <Route path='/onboarding' element = {<OnboardingPage/>} />
-      <Route path='/call' element = {<CallPage/>} />
-      <Route path='/chat' element = {<ChatPage/>} />
+      <Route path='/' element = {authUser?<HomePage/>: <Navigate to="/login" />} />
+      <Route path='/login' element = {!authUser ? <LoginPage/> : <Navigate to="/"/>} />
+      <Route path='/signup' element = { !authUser ? <SignUpPage/> : <Navigate to="/"/>} />
+      <Route path='/notifications' element = {authUser ? <NotificationPage/> : <Navigate to="/login" />} />
+      <Route path='/onboarding' element = {authUser ? <OnboardingPage/> : <Navigate to="/login" />} />
+      <Route path='/call' element = {authUser ? <CallPage/> : <Navigate to="/login" />} />
+      <Route path='/chat' element = {authUser ? <ChatPage/> : <Navigate to="/login" />} />
     </Routes>
 
     <Toaster/>
